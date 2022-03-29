@@ -3,13 +3,13 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers import LSTM
 from keras.layers import Dense
-from sklearn.model_selection import train_test_split
-from keras.callbacks import EarlyStopping, ModelCheckpoint
 
+## read training data
 def readData(path):
   data = pd.read_csv(path)
   return data
 
+## preprocess csv data to dataframe for training
 def augFeatures(df):
   df_train=df
   # Make some adjustment to the original data to the column we want
@@ -51,13 +51,7 @@ def augFeatures(df):
   df_train=df_train[cols2]
   return df_train
 
-def buildTrain(train, pastDay=7, futureDay=1):
-  X_train, Y_train = [], []
-  for i in range(train.shape[0]-futureDay-pastDay):
-    X_train.append(np.array(train.iloc[i:i+pastDay,:-1]))    
-    Y_train.append(np.array(train.iloc[i+pastDay:i+pastDay+futureDay]['left']))
-  return np.array(X_train), np.array(Y_train)
-
+## transform dataframe and prepare to generate time series data
 def normalize(data):
   data_t = data
   data_t = data_t.drop(['timestamp'], axis=1)
@@ -71,12 +65,22 @@ def normalize(data):
   data_norm=data_norm[cols]
   return data_norm
 
+## form time sires data
+def buildTrain(train, pastDay=7, futureDay=1):
+  X_train, Y_train = [], []
+  for i in range(train.shape[0]-futureDay-pastDay):
+    X_train.append(np.array(train.iloc[i:i+pastDay,:-1]))    
+    Y_train.append(np.array(train.iloc[i+pastDay:i+pastDay+futureDay]['left']))
+  return np.array(X_train), np.array(Y_train)
+
+## shuffle training data
 def shuffle(X,Y):
   np.random.seed(15)
   randomList = np.arange(X.shape[0])
   np.random.shuffle(randomList)
   return X[randomList], Y[randomList]
 
+## split validation data
 def splitData(X,Y,rate):
   X_train = X[int(X.shape[0]*rate):]
   Y_train = Y[int(Y.shape[0]*rate):]
@@ -84,6 +88,7 @@ def splitData(X,Y,rate):
   Y_val = Y[:int(Y.shape[0]*rate)]
   return X_train, Y_train, X_val, Y_val
 
+## build lstm model
 def buildLstm(shape):
   # model = Sequential()
   # model.add(LSTM(30, input_length=shape[1], input_dim=shape[2]))
@@ -103,6 +108,7 @@ def buildLstm(shape):
   model.summary()
   return model
 
+## generate dataframe for submission.csv
 def genResultdf(df):
   dft = augFeatures(df)
   # dft = dft.apply(lambda x: model.predict(x_input, verbose=0))
@@ -134,30 +140,38 @@ if __name__ == '__main__':
     parser.add_argument('--output',
                         default='submission.csv',
                         help='output file name')
+    # add one more parameter for input testing data
     parser.add_argument('--test',
                         default='test.csv',
                         help='testing data')
     args = parser.parse_args()
     
-    createDataset()
     # The following part is an example.
     # You can modify it at will.
     # import pandas as pd
     # df_training = pd.read_csv(args.training)
+
+    ##############
+    #### main ####
+    ##############
+
+    # set up windows of timeseries data
+    n_steps=7
+    # read file for training
     data = readData(args.training)
+    # data preprocessing
     df = augFeatures(data)
     df = normalize(df)
     x_train, y_train = buildTrain(df,7,1)
-
     x_train, y_train = shuffle(x_train, y_train)
-    x_train, y_train, x_val, y_val = splitData(x_train, y_train, 0.1)
+    # x_train, y_train, x_val, y_val = splitData(x_train, y_train, 0.1)
 
+    # train lstm model
     model = buildLstm(x_train.shape)
     model.fit(x_train, y_train, epochs=300, verbose=1)
 
-    df_result = genResultdf(args.test)
-
-    # model = Model()
-    # model.train(df_training)
-    # df_result = model.predict(n_step=7)
+    # read testing data and generate result
+    df_res=pd.read_csv(args.test)
+    df_result = genResultdf(df_res)
     df_result.to_csv(args.output, index=0)
+    print("submission.csv generated!")
