@@ -1,4 +1,4 @@
-# COMPAI_HW1
+# COMPAI_HW1 - Predict the electricity generating loading of power plants by LSTM
 NE6081080 COMPAI 1st homework - electricity load prediction
 
 This is a program that use power supply dataset(https://data.gov.tw/dataset/19995) provided by Taiwan Power Company to predict the loading of Taiwan's power plants.
