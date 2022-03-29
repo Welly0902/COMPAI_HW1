@@ -5,6 +5,7 @@ This is a program that use power supply dataset(https://data.gov.tw/dataset/1999
 Considering the loading of Taiwan's power plants is decided by the ability of generate electricity and the electricity usage of the country.
 Except for the ability of power plants information, I also take the season, which will have significant influence to the temperature(https://www.cwb.gov.tw/V8/C/C/Statistics/monthlymean.html), into account. 
 I use LSTM as model structure and can finally get the result in the submission.csv as follow:
+
 ![image](https://user-images.githubusercontent.com/12568316/160665248-df4acdc9-2602-4956-9bd6-19ee2ae352ac.png)
 
 To execute the program:
