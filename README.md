@@ -13,14 +13,9 @@ To execute the program:
 1. Clone program from github(https://github.com/Welly0902/COMPAI_HW1)
 
 2. Set up the environment:
-* python 3.7.7
-* pip install -r requirements.txt
+* pipenv install pandas
 
-3. Download dataset from https://data.gov.tw/dataset/19995.
-* Select the data as training dataset(<training_dataset_name>.csv)
-* Select the date duration you want as testing dataset(<testing_dataset_name>.csv)
-
-4. Run the program:
-* python app.py --training <training_dataset_name>.csv --output submission.csv --test <testing_dataset_name>.csv
-
-5. Get the prediction result from submission.csv 
+3. Run the program:
+* `pipenv run python app.py --training <training_dataset_name>.csv --output submission.csv --test <testing_dataset_name>.csv`
+or simply run `pipenv run python app.py`
+5. Get the prediction result of Jan and Feb from submission.csv 
