@@ -68,6 +68,7 @@ def normalize(data):
 ## form time sires data
 def buildTrain(train, pastDay=7, futureDay=1):
   X_train, Y_train = [], []
+  print(train.shape[0]-futureDay-pastDay)
   for i in range(train.shape[0]-futureDay-pastDay):
     X_train.append(np.array(train.iloc[i:i+pastDay,:-1]))    
     Y_train.append(np.array(train.iloc[i+pastDay:i+pastDay+futureDay]['left']))
@@ -89,18 +90,19 @@ def splitData(X,Y,rate):
   return X_train, Y_train, X_val, Y_val
 
 ## build lstm model
-def buildLstm(shape):
+def buildLstm(x_train):
   # model = Sequential()
   # model.add(LSTM(30, input_length=shape[1], input_dim=shape[2]))
   # # output shape: (1, 1)
   # model.add(Dense(1))
   # model.compile(loss="mse", optimizer="adam")
   # model.summary()
-  n_features = x_train.shape[2]
+  n_features = x_train.shape[1]
+
 
   # define model
   model = Sequential()
-  model.add(LSTM(50, activation='relu', input_shape=(n_steps, n_features)))
+  model.add(LSTM(50, activation='relu', input_shape=(1, n_features)))
   model.add(Dense(1))
   model.compile(optimizer='adam', loss='mse')
   # fit model
@@ -112,9 +114,13 @@ def buildLstm(shape):
 def genResultdf(df):
   dft = augFeatures(df)
   # dft = dft.apply(lambda x: model.predict(x_input, verbose=0))
+  
   dft_norm = normalize(dft)
+  print(dft_norm)
+  print(dft_norm.shape)
   xp, yp = buildTrain(dft_norm,7,1)
-  # print(xp)
+  print(xp)
+  print(len(xp))
   predictions=[]
   for i in xp:
     s=np.array(i)
@@ -162,16 +168,46 @@ if __name__ == '__main__':
     # data preprocessing
     df = augFeatures(data)
     df = normalize(df)
-    x_train, y_train = buildTrain(df,7,1)
-    x_train, y_train = shuffle(x_train, y_train)
+    # print(df.shape)
+    # print(df.sample(frac=1))
+    df = df.sample(frac=1)
+    # x_train, y_train = buildTrain(df,7,1)
+    x_train=df.drop('left',1)
+    # print(x_train.columns)
+    y_train=df['left']
+
+    # x_train, y_train = shuffle(x_train, y_train)
     # x_train, y_train, x_val, y_val = splitData(x_train, y_train, 0.1)
 
     # train lstm model
-    model = buildLstm(x_train.shape)
+    # print(x_train.shape)
+    # print(x_train)
+    model = buildLstm(x_train)
+
+    x_train = np.reshape(x_train.to_numpy(), (x_train.shape[0], 1, x_train.shape[1]))
+    # print(type(x_train))
+    # print(x_train)
+    # print(x_train.to_numpy())
+    # y_train = np.reshape(y_train.to_numpy(), (y_train.shape[0], 1, y_train.shape[1]))
+    y_train = y_train.to_numpy()
     model.fit(x_train, y_train, epochs=300, verbose=1)
 
     # read testing data and generate result
-    df_res=pd.read_csv(args.test)
-    df_result = genResultdf(df_res)
+    df_test=pd.read_csv(args.test,encoding = 'big5')
+    # df_res=pd.read_csv(args.test)
+    df_res = augFeatures(df_test)
+    df_res = normalize(df_res)
+    test = df_res.drop('left',1)
+    test = np.reshape(test.to_numpy(), (test.shape[0], 1, test.shape[1]))
+    # print(test)
+
+    predictions = model.predict(test)
+    # print(predictions)
+    df_result = pd.DataFrame()
+    df_result['date'] = df_test['日期']
+    df_result['operating_reserve(MW)'] = pd.DataFrame(predictions)
+    # print(df_result)
+    # df_result = genResultdf(df_res)
     df_result.to_csv(args.output, index=0)
+    # print(df_res)
     print("submission.csv generated!")
