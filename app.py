@@ -12,7 +12,7 @@ def readData(path):
   # df['time'] = df['time'].dt.date
   df = df['備轉容量(MW)']
   df.columns=['left']
-  print(df)
+  # print(df)
   return df
 
 # You can write code above the if-main block.
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     model_fit = model.fit()
     output = model_fit.forecast(15)
 
-    print(type(output))
+    # print(type(output))
 
     result = pd.DataFrame(output)
     result['date'] = pd.date_range(start='30/3/2022', periods=15)
